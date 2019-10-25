@@ -20,14 +20,15 @@ process inputFile {
     for i in {1..22}; do
       cat id_*_chr\${i}.23andme.txt >> result.txt;
     done
-    if [ -f id_*_chrX.23andme.txt ]; then
-      cat id_*_chrX.23andme.txt >> result.txt;
-    fi
+    #if [ -f id_*_chrX.23andme.txt ]; then
+    #  cat id_*_chrX.23andme.txt >> result.txt;
+    #fi
     """
 }
 
 process app {
 
+  publishDir params.publishDir, mode: 'copy'
   echo true
   container params.dockerImage
 
@@ -38,6 +39,7 @@ process app {
   file ("2nd_model/DEEP/gnuplot/*.dat") into appOut
   file ("ADMIX_OLD_RECENT_MEAN6.txt") into appOut2
   file ("GSI_OLD_RECENT_MEAN6.txt") into appOut3
+  file ("*") into appOut4
 
   script:
   """
@@ -46,16 +48,14 @@ process app {
   pushd /app
   /app/SCRIPT_5POP_ALT_GenePlaza.sh
   popd
-  ls -l /app
-  mv /app/ADMIX_OLD_RECENT_MEAN6.txt .
-  mv /app/2nd_model/DEEP/gnuplot/*.dat .
+  mv /app/* .
   """
 }
 
 process transform {
   publishDir params.publishDir, mode: 'copy'
   echo true
-  container 'amancevice/pandas:latest-alpine'
+  container 'amancevice/pandas:slim'
 
   input:
   file('*') from appOut.collect()
@@ -66,7 +66,7 @@ process transform {
   file 'result.json' into transformOut
 
   """
-  #!/usr/bin/python
+  #!/usr/local/bin/python
 
   import pandas as pd
   import os
