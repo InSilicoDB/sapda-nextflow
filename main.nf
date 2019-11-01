@@ -7,11 +7,12 @@ rawFileChannel = Channel.fromPath(params.rawdata)
 process inputFile {
 
   echo true
+  container params.dockerImage
 
   input:
   file rawdata from rawFileChannel
   output:
-  file("result.txt") into inputFileOutChan
+  file("TEST.txt") into inputFileOutChan
 
   script:
     """
@@ -20,6 +21,7 @@ process inputFile {
     for i in {1..22}; do
       cat id_*_chr\${i}.23andme.txt >> result.txt;
     done
+    awk -F '\t' 'NR==FNR{c[\$1]++;next};c[\$1]' OFS="\t" /reference-file/Ancestry_59K_SNPs.txt result.txt > TEST.txt
     #if [ -f id_*_chrX.23andme.txt ]; then
     #  cat id_*_chrX.23andme.txt >> result.txt;
     #fi
