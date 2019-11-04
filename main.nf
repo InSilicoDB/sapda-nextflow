@@ -1,6 +1,6 @@
 params.rawdata = null
 params.publishDir = "/tmp"
-params.dockerImage = 'geneplaza/sapda-k5:debian2'
+params.dockerImage = 'geneplaza/sapda-k5:debian3'
 
 rawFileChannel = Channel.fromPath(params.rawdata)
 
@@ -19,12 +19,12 @@ process inputFile {
     unzip *.zip
     ls -l
     for i in {1..22}; do
-      cat id_*_chr\${i}.23andme.txt >> result.txt;
+      awk -F '\\t' 'NR==FNR{c[\$1]++;next};c[\$1]' OFS="\\t" /reference-file/Ancestry_59K_SNPs.txt id_*_chr\${i}.23andme.txt >> TEST.txt
     done
-    awk -F '\t' 'NR==FNR{c[\$1]++;next};c[\$1]' OFS="\t" /reference-file/Ancestry_59K_SNPs.txt result.txt > TEST.txt
     #if [ -f id_*_chrX.23andme.txt ]; then
     #  cat id_*_chrX.23andme.txt >> result.txt;
     #fi
+    ls -lh TEST.txt
     """
 }
 
