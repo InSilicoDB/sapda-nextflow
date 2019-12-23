@@ -1,6 +1,6 @@
 params.rawdata = null
 params.publishDir = "/tmp"
-params.dockerImage = 'geneplaza/sapda-k5:debian3'
+params.dockerImage = 'geneplaza/sapda-k5:debian4'
 
 rawFileChannel = Channel.fromPath(params.rawdata)
 
@@ -21,9 +21,6 @@ process inputFile {
     for i in {1..22}; do
       awk -F '\\t' 'NR==FNR{c[\$1]++;next};c[\$1]' OFS="\\t" /reference-file/Ancestry_59K_SNPs.txt id_*_chr\${i}.23andme.txt >> TEST.txt
     done
-    #if [ -f id_*_chrX.23andme.txt ]; then
-    #  cat id_*_chrX.23andme.txt >> result.txt;
-    #fi
     ls -lh TEST.txt
     """
 }
@@ -51,6 +48,7 @@ process app {
   /app/SCRIPT_5POP_ALT_GenePlaza.sh
   popd
   mv /app/* .
+  ls -lh TEST.txt
   """
 }
 
@@ -69,12 +67,13 @@ process transform {
 
   """
   #!/usr/local/bin/python
-
   import pandas as pd
   import os
   import glob
   import ast
   import json
+  import traceback
+  import logging
 
   json_out = {}
 
@@ -88,8 +87,12 @@ process transform {
   shared_genetic_drift_paths = glob.glob('*.dat')
 
   for path in shared_genetic_drift_paths:
-      population = (os.path.basename(path.strip(".dat")))
+    population = (os.path.basename(path.strip(".dat")))
+    try:
+      print("working dir is %s"%os.getcwd())
+      print(path)
       df_k = pd.read_csv(path, delimiter='\t', header=None)
+      print('file read')
       df_k = df_k.drop(df_k.columns[range(13,24)], axis=1)
       df_k['Chromosome'], df_k['RSID'] = df_k[0].str.split('-', 1).str
       df_k = df_k.drop(df_k.columns[0], axis=1)
@@ -98,7 +101,10 @@ process transform {
       df_k = df_k.drop(df_k.columns[cols], axis =1)
       df_k.columns=['reference', 'E-Asian-AF','SE-Asian-AF','Siberian-Amerindian-AF','S-Asian-AF','NE-European-AF','W-European-AF','S-European-AF','W-African-AF','E-African-AF','chromosome','RSID','genotype']
       json_out[population] = ast.literal_eval(df_k.to_json(orient='records'))
-
+    except Exception as e:
+      df_k = pd.DataFrame(columns=['reference', 'E-Asian-AF','SE-Asian-AF','Siberian-Amerindian-AF','S-Asian-AF','NE-European-AF','W-European-AF','S-European-AF','W-African-AF','E-African-AF','chromosome','RSID','genotype'])
+      json_out[population] = ast.literal_eval(df_k.to_json(orient='records'))
+      logging.error(traceback.format_exc())
   with open('result.json', 'w') as outfile:
     json.dump(json_out, outfile, ensure_ascii=False)
   """
