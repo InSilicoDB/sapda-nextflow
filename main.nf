@@ -18,9 +18,16 @@ process inputFile {
     """
     unzip *.zip
     ls -l
-    for i in {1..22}; do
-      awk -F '\\t' 'NR==FNR{c[\$1]++;next};c[\$1]' OFS="\\t" /reference-file/Ancestry_59K_SNPs.txt id_*_chr\${i}.23andme.txt >> TEST.txt
-    done
+    count=$(ls -l $1/*.txt 2>/dev/null | wc -l)
+    echo $count
+
+    if [[ $count -eq 1 ]] ; then
+      cp *.txt TEST.txt
+    else
+      for i in {1..22}; do
+        awk -F '\\t' 'NR==FNR{c[\$1]++;next};c[\$1]' OFS="\\t" /reference-file/Ancestry_59K_SNPs.txt id_*_chr\${i}.23andme.txt >> TEST.txt
+      done
+    fi
     ls -lh TEST.txt
     """
 }
