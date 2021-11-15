@@ -19,7 +19,7 @@ process inputFile {
     unzip *.zip
     ls -l
     count=\$(ls -l *.txt 2>/dev/null | wc -l)
-    echo $count
+    echo \$count
 
     if [[ \$count -eq 1 ]] ; then
       cp *.txt TEST.txt
