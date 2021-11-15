@@ -18,10 +18,10 @@ process inputFile {
     """
     unzip *.zip
     ls -l
-    count=$(ls -l $1/*.txt 2>/dev/null | wc -l)
+    count=\$(ls -l *.txt 2>/dev/null | wc -l)
     echo $count
 
-    if [[ $count -eq 1 ]] ; then
+    if [[ \$count -eq 1 ]] ; then
       cp *.txt TEST.txt
     else
       for i in {1..22}; do
